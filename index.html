@@ -1,190 +1,74 @@
 <!doctype html>
-<html>
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>AR Menu – MVP</title>
-  <!-- A-Frame + AR.js (marker-based WebAR) -->
-  <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
-  <style>
-    html,body{margin:0;padding:0;background:#000;overflow:hidden;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
-    .ui{position:fixed;left:0;right:0;bottom:0;display:flex;gap:10px;align-items:center;padding:10px 12px;background:rgba(0,0,0,.6);color:#fff;backdrop-filter:blur(6px)}
-    .ui .left{display:flex;gap:10px;align-items:center;min-width:0}
-    .title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .tag{font-size:12px;opacity:.9}
-    .btn{appearance:none;border:0;border-radius:999px;padding:8px 12px;background:#fff;color:#111;font-weight:600;cursor:pointer}
-    .btn.outline{background:transparent;border:1px solid #fff;color:#fff}
-    .select, .input{background:#111;color:#fff;border:1px solid #303030;border-radius:10px;padding:6px 10px}
-    .hint{position:fixed;top:10px;left:10px;right:10px;background:rgba(255,255,255,.08);color:#fff;padding:8px 12px;border-radius:12px;font-size:12px}
-    .fallback{position:fixed;inset:0;background:#0b0b0b;color:#fff;display:none;align-items:center;justify-content:center;padding:20px;text-align:center}
-    .fallback a{color:#9dffb0}
-  </style>
-</head>
-<body>
-  <div class="hint">Point your camera at the <b>HIRO</b> marker to see the menu card. Tip: print a HIRO marker from any AR.js tutorial and place it on the table.</div>
+}
 
-  <!-- AR Scene -->
-  <a-scene id="scene" embedded vr-mode-ui="enabled:false" renderer="colorManagement:true; physicallyCorrectLights:true" arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled:false">
-    <a-assets id="assets"></a-assets>
 
-    <!-- Lighting for nicer look -->
-    <a-entity light="type: hemisphere; intensity: 0.9"></a-entity>
-    <a-entity light="type: directional; intensity: 0.6" position="0 1 0"></a-entity>
+function updateCard(){
+state.list = filtered();
+if(state.list.length === 0){
+uiTitle.textContent = 'No items in this category';
+uiMeta.textContent = '';
+itemTitle.setAttribute('value', '—');
+itemMeta.setAttribute('value', '');
+imgPlane.setAttribute('material', 'src:#placeholder; transparent:true; shader:standard');
+orderBtn.onclick = null; return;
+}
+clampIdx();
+const it = state.list[state.idx];
 
-    <!-- Marker anchor -->
-    <a-marker id="marker" type="hiro">
-      <a-entity id="card" position="0 0 0" rotation="-90 0 0">
-        <!-- Image (dish or promo) -->
-        <a-plane id="imgPlane" width="1.2" height="0.72" material="transparent:true; shader: standard; src:#placeholder"></a-plane>
-        <!-- White label plate under image -->
-        <a-plane width="1.2" height="0.30" position="0 -0.56 0" color="#ffffff"></a-plane>
-        <!-- Text group on the label -->
-        <a-entity id="textGroup" position="0 -0.565 0.001">
-          <a-text id="itemTitle" value="Item name" align="center" color="#111" width="2.6" position="0 0.08 0"></a-text>
-          <a-text id="itemMeta" value="$0.00 • tags" align="center" color="#333" width="2.6" position="0 -0.02 0"></a-text>
-        </a-entity>
-      </a-entity>
-    </a-marker>
 
-    <a-entity camera></a-entity>
-  </a-scene>
+// Update UI texts
+const price = `$${it.price.toFixed(2)}`;
+const tags = (it.tags||[]).join(', ');
+uiTitle.textContent = it.name;
+uiMeta.textContent = `${price}${tags? ' • ' + tags : ''}`;
+itemTitle.setAttribute('value', it.name);
+itemMeta.setAttribute('value', `${price}${tags? ' • ' + tags : ''}`);
 
-  <!-- UI Overlay -->
-  <div class="ui">
-    <div class="left" style="flex:1;min-width:0">
-      <button class="btn outline" id="prevBtn">◀︎</button>
-      <div style="min-width:0">
-        <div class="title" id="uiTitle">—</div>
-        <div class="tag" id="uiMeta">—</div>
-      </div>
-    </div>
 
-    <select class="select" id="filter">
-      <option value="all">All</option>
-      <option value="food">Food</option>
-      <option value="drinks">Drinks</option>
-      <option value="desserts">Desserts</option>
-    </select>
+// Find or create an <img> asset for this URL
+let assetImg = [...assets.children].find(img => img.tagName === 'IMG' && img.src === it.image);
+if(!assetImg){ assetImg = document.createElement('img'); assetImg.crossOrigin = 'anonymous'; assetImg.src = it.image; assets.appendChild(assetImg); }
 
-    <button class="btn outline" id="nextBtn">▶︎</button>
-    <button class="btn" id="orderBtn">Order</button>
-  </div>
 
-  <!-- Non-AR fallback -->
-  <div id="fallback" class="fallback">
-    <div>
-      <h2>AR not available</h2>
-      <p>It looks like the camera isn’t available or permission was denied. You can still view the menu normally.</p>
-      <p><a href="#" id="openList">Open basic menu</a></p>
-    </div>
-  </div>
+// Set the plane texture to the asset
+imgPlane.setAttribute('material', `src:${assetImg.id ? '#' + assetImg.id : it.image}; transparent:true; shader:standard`);
 
-  <script>
-  // === Minimal data (edit this!). In production, fetch from menu.json ===
-  const MENU = [
-    { id: 'AVO1', name: 'Avocado Toast', price: 14.5, category: 'food', tags: ['veg','nuts'], image: 'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=1200', orderUrl: 'https://example.com/order?item=AVO1' },
-    { id: 'LAT1', name: 'Cafe Latte', price: 4.8, category: 'drinks', tags: ['coffee'], image: 'https://images.unsplash.com/photo-1453614512568-c4024d13c247?w=1200', orderUrl: 'https://example.com/order?item=LAT1' },
-    { id: 'BRN1', name: 'Brownie', price: 5.5, category: 'desserts', tags: ['veg','contains egg'], image: 'https://images.unsplash.com/photo-1606313564200-e75d5e30476e?w=1200', orderUrl: 'https://example.com/order?item=BRN1' },
-    { id: 'TEA1', name: 'English Breakfast Tea', price: 3.9, category: 'drinks', tags: ['tea'], image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=1200', orderUrl: 'https://example.com/order?item=TEA1' }
-  ];
 
-  const state = { idx: 0, filter: 'all', list: [...MENU] };
+// Order button
+orderBtn.onclick = () => window.open(it.orderUrl || '#', '_blank');
+}
 
-  const assets = document.getElementById('assets');
-  const imgPlane = document.getElementById('imgPlane');
-  const itemTitle = document.getElementById('itemTitle');
-  const itemMeta = document.getElementById('itemMeta');
-  const uiTitle = document.getElementById('uiTitle');
-  const uiMeta = document.getElementById('uiMeta');
-  const orderBtn = document.getElementById('orderBtn');
-  const filterSel = document.getElementById('filter');
-  const prevBtn = document.getElementById('prevBtn');
-  const nextBtn = document.getElementById('nextBtn');
 
-  // Placeholder asset for first paint
-  const ph = document.createElement('img'); ph.id = 'placeholder'; ph.crossOrigin = 'anonymous'; ph.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="720"><rect width="100%" height="100%" fill="#f3f4f6"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="Arial" font-size="48" fill="#9ca3af">AR Menu</text></svg>`);
-  assets.appendChild(ph);
+// Event wiring
+filterSel.onchange = () => { state.filter = filterSel.value; state.idx = 0; updateCard(); };
+prevBtn.onclick = () => { state.idx--; updateCard(); };
+nextBtn.onclick = () => { state.idx++; updateCard(); };
 
-  function preloadImages(list){
-    // Preload unique images into <a-assets> for better performance
-    const urls = Array.from(new Set(list.map(i=>i.image)));
-    urls.forEach((url, i) => {
-      const id = 'img' + i;
-      const el = document.createElement('img');
-      el.id = id; el.crossOrigin = 'anonymous'; el.src = url;
-      assets.appendChild(el);
-    });
-  }
 
-  function filtered(){
-    return state.filter === 'all' ? MENU : MENU.filter(i => i.category === state.filter);
-  }
+// Init
+preloadImages(MENU);
+updateCard();
 
-  function clampIdx(){
-    if(state.idx < 0) state.idx = state.list.length - 1;
-    if(state.idx >= state.list.length) state.idx = 0;
-  }
 
-  function updateCard(){
-    state.list = filtered();
-    if(state.list.length === 0){
-      uiTitle.textContent = 'No items in this category';
-      uiMeta.textContent = '';
-      itemTitle.setAttribute('value', '—');
-      itemMeta.setAttribute('value', '');
-      imgPlane.setAttribute('material', 'src:#placeholder; transparent:true; shader:standard');
-      orderBtn.onclick = null; return;
-    }
-    clampIdx();
-    const it = state.list[state.idx];
+// Basic AR availability check → show fallback if needed
+async function checkCamera(){
+try{
+await navigator.mediaDevices.getUserMedia({video:true});
+}catch(e){
+document.getElementById('fallback').style.display = 'flex';
+}
+}
+checkCamera();
 
-    // Update UI texts
-    const price = `$${it.price.toFixed(2)}`;
-    const tags = (it.tags||[]).join(', ');
-    uiTitle.textContent = it.name;
-    uiMeta.textContent = `${price}${tags? ' • ' + tags : ''}`;
-    itemTitle.setAttribute('value', it.name);
-    itemMeta.setAttribute('value', `${price}${tags? ' • ' + tags : ''}`);
 
-    // Find or create an <img> asset for this URL
-    let assetImg = [...assets.children].find(img => img.tagName === 'IMG' && img.src === it.image);
-    if(!assetImg){ assetImg = document.createElement('img'); assetImg.crossOrigin = 'anonymous'; assetImg.src = it.image; assets.appendChild(assetImg); }
-
-    // Set the plane texture to the asset
-    imgPlane.setAttribute('material', `src:${assetImg.id ? '#' + assetImg.id : it.image}; transparent:true; shader:standard`);
-
-    // Order button
-    orderBtn.onclick = () => window.open(it.orderUrl || '#', '_blank');
-  }
-
-  // Event wiring
-  filterSel.onchange = () => { state.filter = filterSel.value; state.idx = 0; updateCard(); };
-  prevBtn.onclick = () => { state.idx--; updateCard(); };
-  nextBtn.onclick = () => { state.idx++; updateCard(); };
-
-  // Init
-  preloadImages(MENU);
-  updateCard();
-
-  // Basic AR availability check → show fallback if needed
-  async function checkCamera(){
-    try{
-      await navigator.mediaDevices.getUserMedia({video:true});
-    }catch(e){
-      document.getElementById('fallback').style.display = 'flex';
-    }
-  }
-  checkCamera();
-
-  // Simple non-AR list view when AR not available
-  document.getElementById('openList').onclick = (e)=>{
-    e.preventDefault();
-    const div = document.createElement('div');
-    div.style.cssText = 'position:fixed;inset:0;background:#fff;color:#111;overflow:auto;padding:20px';
-    div.innerHTML = '<h2>Menu</h2>' + MENU.map(i=>`<div style="border:1px solid #eee;border-radius:12px;padding:12px;margin:10px 0;display:flex;gap:12px;align-items:center"><img src="${i.image}" style="width:120px;height:80px;object-fit:cover;border-radius:10px"/><div style="flex:1"><div style="font-weight:700">${i.name}</div><div style="opacity:.7">$${i.price.toFixed(2)} ${i.tags? '• '+i.tags.join(', '): ''}</div></div><a href="${i.orderUrl}" target="_blank" style="text-decoration:none;background:#111;color:#fff;padding:8px 12px;border-radius:999px">Order</a></div>`).join('');
-    document.body.appendChild(div);
-  };
-  </script>
+// Simple non-AR list view when AR not available
+document.getElementById('openList').onclick = (e)=>{
+e.preventDefault();
+const div = document.createElement('div');
+div.style.cssText = 'position:fixed;inset:0;background:#fff;color:#111;overflow:auto;padding:20px';
+div.innerHTML = '<h2>Menu</h2>' + MENU.map(i=>`<div style="border:1px solid #eee;border-radius:12px;padding:12px;margin:10px 0;display:flex;gap:12px;align-items:center"><img src="${i.image}" style="width:120px;height:80px;object-fit:cover;border-radius:10px"/><div style="flex:1"><div style="font-weight:700">${i.name}</div><div style="opacity:.7">$${i.price.toFixed(2)} ${i.tags? '• '+i.tags.join(', '): ''}</div></div><a href="${i.orderUrl}" target="_blank" style="text-decoration:none;background:#111;color:#fff;padding:8px 12px;border-radius:999px">Order</a></div>`).join('');
+document.body.appendChild(div);
+};
+</script>
 </body>
 </html>
