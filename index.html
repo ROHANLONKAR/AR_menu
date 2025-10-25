@@ -1,74 +1,92 @@
 <!doctype html>
-}
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title>Table AR Dish Preview</title>
 
+    <!-- A-Frame and AR.js -->
+    <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
 
-function updateCard(){
-state.list = filtered();
-if(state.list.length === 0){
-uiTitle.textContent = 'No items in this category';
-uiMeta.textContent = '';
-itemTitle.setAttribute('value', '—');
-itemMeta.setAttribute('value', '');
-imgPlane.setAttribute('material', 'src:#placeholder; transparent:true; shader:standard');
-orderBtn.onclick = null; return;
-}
-clampIdx();
-const it = state.list[state.idx];
+    <style>
+      body { margin:0; overflow:hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      .ui-top {
+        position: fixed;
+        left: 0; right: 0; top: 0;
+        background: rgba(0,0,0,.6);
+        color: #fff;
+        padding: 8px 12px;
+        font-size: 14px;
+        line-height: 1.4;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+      }
+      .item-info {
+        font-size: 13px;
+        line-height: 1.3;
+      }
+      .item-name { font-weight: 600; font-size: 14px; }
+      .price { font-weight:600; font-size:14px; text-align:right; }
+    </style>
+  </head>
 
+  <body>
+    <!-- top overlay UI (always visible on screen, not AR object) -->
+    <div class="ui-top">
+      <div class="item-info">
+        <div class="item-name">Chocolate Pastry Block</div>
+        <div>$9.50 • Contains nuts, dairy</div>
+        <div>Serving: ~8cm wide (true size)</div>
+      </div>
+      <div class="price">$9.50</div>
+    </div>
 
-// Update UI texts
-const price = `$${it.price.toFixed(2)}`;
-const tags = (it.tags||[]).join(', ');
-uiTitle.textContent = it.name;
-uiMeta.textContent = `${price}${tags? ' • ' + tags : ''}`;
-itemTitle.setAttribute('value', it.name);
-itemMeta.setAttribute('value', `${price}${tags? ' • ' + tags : ''}`);
+    <!-- AR scene -->
+    <a-scene
+      embedded
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true"
+      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false">
 
+      <!-- lights to make the model look nicer -->
+      <a-entity light="type: hemisphere; intensity: 0.9"></a-entity>
+      <a-entity light="type: directional; intensity: 0.6" position="0 1 0"></a-entity>
 
-// Find or create an <img> asset for this URL
-let assetImg = [...assets.children].find(img => img.tagName === 'IMG' && img.src === it.image);
-if(!assetImg){ assetImg = document.createElement('img'); assetImg.crossOrigin = 'anonymous'; assetImg.src = it.image; assets.appendChild(assetImg); }
+      <!-- This marker MUST match the printed marker on the placemat.
+           'type="hiro"' = use the default HIRO marker pattern.
+           You will physically print that HIRO marker in the center of your branded mat. -->
+      <a-marker type="hiro">
+        <!-- 3D food model hovering just above the marker -->
+        <a-entity
+          gltf-model="pastry.gltf"
+          position="0 0 0.05"
+          rotation="0 0 0"
+          scale="0.05 0.05 0.05">
+        </a-entity>
 
+        <!-- Optional AR label card sitting in AR space -->
+        <a-plane
+          position="0 -0.2 0.05"
+          rotation="-90 0 0"
+          width="0.6"
+          height="0.25"
+          color="#ffffff"
+          material="shader: standard; transparent: false;">
+        </a-plane>
 
-// Set the plane texture to the asset
-imgPlane.setAttribute('material', `src:${assetImg.id ? '#' + assetImg.id : it.image}; transparent:true; shader:standard`);
+        <a-entity
+          rotation="-90 0 0"
+          position="0 -0.2 0.06"
+          text="value: Chocolate Pastry Block\n$9.50\nAllergens: Nuts, Dairy;
+                align: center;
+                color: #111;
+                width: 1.5;">
+        </a-entity>
+      </a-marker>
 
-
-// Order button
-orderBtn.onclick = () => window.open(it.orderUrl || '#', '_blank');
-}
-
-
-// Event wiring
-filterSel.onchange = () => { state.filter = filterSel.value; state.idx = 0; updateCard(); };
-prevBtn.onclick = () => { state.idx--; updateCard(); };
-nextBtn.onclick = () => { state.idx++; updateCard(); };
-
-
-// Init
-preloadImages(MENU);
-updateCard();
-
-
-// Basic AR availability check → show fallback if needed
-async function checkCamera(){
-try{
-await navigator.mediaDevices.getUserMedia({video:true});
-}catch(e){
-document.getElementById('fallback').style.display = 'flex';
-}
-}
-checkCamera();
-
-
-// Simple non-AR list view when AR not available
-document.getElementById('openList').onclick = (e)=>{
-e.preventDefault();
-const div = document.createElement('div');
-div.style.cssText = 'position:fixed;inset:0;background:#fff;color:#111;overflow:auto;padding:20px';
-div.innerHTML = '<h2>Menu</h2>' + MENU.map(i=>`<div style="border:1px solid #eee;border-radius:12px;padding:12px;margin:10px 0;display:flex;gap:12px;align-items:center"><img src="${i.image}" style="width:120px;height:80px;object-fit:cover;border-radius:10px"/><div style="flex:1"><div style="font-weight:700">${i.name}</div><div style="opacity:.7">$${i.price.toFixed(2)} ${i.tags? '• '+i.tags.join(', '): ''}</div></div><a href="${i.orderUrl}" target="_blank" style="text-decoration:none;background:#111;color:#fff;padding:8px 12px;border-radius:999px">Order</a></div>`).join('');
-document.body.appendChild(div);
-};
-</script>
-</body>
+      <a-entity camera></a-entity>
+    </a-scene>
+  </body>
 </html>
