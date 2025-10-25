@@ -44,11 +44,21 @@
     </div>
 
     <!-- AR scene -->
-    <a-scene
-      embedded
-      vr-mode-ui="enabled: false"
-      renderer="colorManagement: true; physicallyCorrectLights: true"
-      arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: false">
+<a-scene
+  embedded
+  vr-mode-ui="enabled: false"
+  renderer="colorManagement: true; physicallyCorrectLights: true"
+  arjs="
+    trackingMethod: best;
+    sourceType: webcam;
+    facingMode: environment;
+    sourceWidth: 1280;
+    sourceHeight: 720;
+    displayWidth: 1280;
+    displayHeight: 720;
+    debugUIEnabled: false;
+  ">
+
 
       <!-- lights to make the model look nicer -->
       <a-entity light="type: hemisphere; intensity: 0.9"></a-entity>
