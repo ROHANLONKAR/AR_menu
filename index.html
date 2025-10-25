@@ -17,7 +17,7 @@
         background: #000;
       }
 
-      /* top info bar overlay (not AR, always visible) */
+      /* top info bar overlay (not AR, always visible on screen) */
       .ui-top {
         position: fixed;
         left: 0;
@@ -31,7 +31,7 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        z-index: 9999; /* make sure it sits above the AR canvas */
+        z-index: 9999; /* keeps overlay above AR canvas */
       }
 
       .item-info {
@@ -51,10 +51,25 @@
         white-space: nowrap;
       }
 
-      /* visually zoom-out the AR scene so camera doesn't feel crazy zoomed in */
+      /* visually zoom-out the AR scene so camera doesn't feel super zoomed in */
       a-scene {
         transform: scale(0.8);           /* tweak 0.8 -> 0.7 if still feels too close */
         transform-origin: center center;
+      }
+
+      /* small helper text at the bottom for debugging / user feedback */
+      .status {
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,.5);
+        color: #fff;
+        font-size: 12px;
+        line-height: 1.4;
+        padding: 6px 10px;
+        text-align: center;
+        z-index: 9999;
       }
     </style>
   </head>
@@ -68,6 +83,12 @@
         <div>Serving: ~8cm wide (true size)</div>
       </div>
       <div class="price">$9.50</div>
+    </div>
+
+    <!-- bottom status hint -->
+    <div class="status">
+      Point your camera at the HIRO marker card on the table.<br/>
+      (If you only see camera zoomed in, move back a little.)
     </div>
 
     <!-- AR scene -->
@@ -93,13 +114,16 @@
 
       <!-- marker anchor
            'type="hiro"' uses the default HIRO marker.
-           Print HIRO marker in the middle of your branded table card.
+           print the HIRO marker and put it on the table in your "placemat" card.
       -->
       <a-marker type="hiro">
 
-        <!-- 3D food model hovering just above the marker -->
+        <!-- 3D food model hovering just above the marker.
+             we are now using OBJ + MTL instead of glTF.
+             brownie.obj / brownie.mtl must sit in the SAME folder as this HTML.
+        -->
         <a-entity
-          gltf-model="pastry.gltf"
+          obj-model="obj: url(brownie.obj); mtl: url(brownie.mtl)"
           position="0 0 0.05"
           rotation="0 0 0"
           scale="0.03 0.03 0.03"
@@ -115,7 +139,7 @@
           material="shader: standard; transparent: false;"
         ></a-plane>
 
-        <!-- text on that card -->
+        <!-- text on that floating card -->
         <a-entity
           rotation="-90 0 0"
           position="0 -0.2 0.06"
