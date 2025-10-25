@@ -92,57 +92,65 @@
 
       <!-- use the DEFAULT marker -->
       <a-marker type="hiro">
+<a-marker type="hiro">
 
-        <!-- fake shadow -->
-        <a-circle
-          position="0 -0.001 0"
-          rotation="-90 0 0"
-          radius="0.15"
-          material="color: #000000; opacity: 0.15; transparent: true;"
-        ></a-circle>
+  <!-- fake shadow under plate -->
+  <a-circle
+    position="0 -0.001 0"
+    rotation="-90 0 0"
+    radius="0.15"
+    material="color: #000000; opacity: 0.2; transparent: true;"
+  ></a-circle>
 
-        <!-- plate -->
-        <a-cylinder
-          position="0 0 0"
-          rotation="-90 0 0"
-          radius="0.12"
-          height="0.015"
-          color="#ffffff"
-          material="color: #ffffff; metalness: 0.05; roughness: 0.4;"
-        ></a-cylinder>
+  <!-- plate base -->
+  <a-cylinder
+    position="0 0 0"
+    rotation="-90 0 0"
+    radius="0.12"
+    height="0.015"
+    color="#ffffff"
+    material="color: #ffffff; metalness: 0.05; roughness: 0.4;"
+  ></a-cylinder>
 
-        <a-cylinder
-          position="0 0.005 0"
-          rotation="-90 0 0"
-          radius="0.13"
-          height="0.003"
-          color="#f5f5f5"
-          material="color: #f5f5f5; metalness: 0.1; roughness: 0.6;"
-        ></a-cylinder>
+  <!-- plate rim -->
+  <a-cylinder
+    position="0 0.005 0"
+    rotation="-90 0 0"
+    radius="0.13"
+    height="0.003"
+    color="#f5f5f5"
+    material="color: #f5f5f5; metalness: 0.1; roughness: 0.6;"
+  ></a-cylinder>
 
-        <!-- brownie from your brownie.obj/brownie.mtl -->
-        <a-entity
-          obj-model="obj: url(brownie.obj); mtl: url(brownie.mtl)"
-          position="0 0.03 0"
-          rotation="0 0 0"
-          scale="0.03 0.03 0.03"
-        ></a-entity>
+  <!-- brownie model on the plate -->
+  <a-entity
+    obj-model="obj: url(brownie.obj); mtl: url(brownie.mtl)"
+    position="0 0.03 0"
+    rotation="0 20 0"
+    scale="0.03 0.03 0.03"
+  ></a-entity>
 
-        <!-- floating info card -->
-        <a-plane
-          position="0 -0.25 0.05"
-          rotation="-90 0 0"
-          width="0.6"
-          height="0.25"
-          color="#ffffff"
-          material="shader: standard; transparent: false;"
-        ></a-plane>
+  <!-- floating info card (moved UP and BACK so it's readable) -->
+  <a-plane
+    position="0 0.12 -0.15"
+    rotation="0 0 0"
+    width="0.4"
+    height="0.18"
+    color="#ffffff"
+    material="shader: standard; transparent: true; opacity: 0.9;"
+  ></a-plane>
 
-        <a-entity
-          rotation="-90 0 0"
-          position="0 -0.25 0.06"
-          text="value: Chocolate Pastry Block - $9.50 - Allergens: Nuts, Dairy; align: center; color: #111; width: 1.5"
-        ></a-entity>
+  <a-entity
+    position="0 0.12 -0.149"
+    rotation="0 0 0"
+    text="value: Chocolate Pastry Block\n$9.50  ·  Nuts, Dairy\n~8cm portion (actual size);
+          align: center;
+          color: #111;
+          width: 1.2"
+  ></a-entity>
+
+</a-marker>
+
 
       </a-marker>
 
