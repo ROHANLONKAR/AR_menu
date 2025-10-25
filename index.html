@@ -10,10 +10,19 @@
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
 
     <style>
-      body { margin:0; overflow:hidden; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+      body {
+        margin: 0;
+        overflow: hidden;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #000;
+      }
+
+      /* top info bar overlay (not AR, always visible) */
       .ui-top {
         position: fixed;
-        left: 0; right: 0; top: 0;
+        left: 0;
+        right: 0;
+        top: 0;
         background: rgba(0,0,0,.6);
         color: #fff;
         padding: 8px 12px;
@@ -22,18 +31,36 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
+        z-index: 9999; /* make sure it sits above the AR canvas */
       }
+
       .item-info {
         font-size: 13px;
         line-height: 1.3;
       }
-      .item-name { font-weight: 600; font-size: 14px; }
-      .price { font-weight:600; font-size:14px; text-align:right; }
+
+      .item-name {
+        font-weight: 600;
+        font-size: 14px;
+      }
+
+      .price {
+        font-weight: 600;
+        font-size: 14px;
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      /* visually zoom-out the AR scene so camera doesn't feel crazy zoomed in */
+      a-scene {
+        transform: scale(0.8);           /* tweak 0.8 -> 0.7 if still feels too close */
+        transform-origin: center center;
+      }
     </style>
   </head>
 
   <body>
-    <!-- top overlay UI (always visible on screen, not AR object) -->
+    <!-- top overlay UI -->
     <div class="ui-top">
       <div class="item-info">
         <div class="item-name">Chocolate Pastry Block</div>
@@ -44,56 +71,57 @@
     </div>
 
     <!-- AR scene -->
-<a-scene
-  embedded
-  vr-mode-ui="enabled: false"
-  renderer="colorManagement: true; physicallyCorrectLights: true"
-  arjs="
-    trackingMethod: best;
-    sourceType: webcam;
-    facingMode: environment;
-    sourceWidth: 1280;
-    sourceHeight: 720;
-    displayWidth: 1280;
-    displayHeight: 720;
-    debugUIEnabled: false;
-  ">
-
+    <a-scene
+      embedded
+      vr-mode-ui="enabled: false"
+      renderer="colorManagement: true; physicallyCorrectLights: true"
+      arjs="
+        trackingMethod: best;
+        sourceType: webcam;
+        facingMode: environment;
+        sourceWidth: 1280;
+        sourceHeight: 720;
+        displayWidth: 1280;
+        displayHeight: 720;
+        debugUIEnabled: false;
+      "
+    >
 
       <!-- lights to make the model look nicer -->
       <a-entity light="type: hemisphere; intensity: 0.9"></a-entity>
       <a-entity light="type: directional; intensity: 0.6" position="0 1 0"></a-entity>
 
-      <!-- This marker MUST match the printed marker on the placemat.
-           'type="hiro"' = use the default HIRO marker pattern.
-           You will physically print that HIRO marker in the center of your branded mat. -->
+      <!-- marker anchor
+           'type="hiro"' uses the default HIRO marker.
+           Print HIRO marker in the middle of your branded table card.
+      -->
       <a-marker type="hiro">
+
         <!-- 3D food model hovering just above the marker -->
         <a-entity
           gltf-model="pastry.gltf"
           position="0 0 0.05"
           rotation="0 0 0"
-          scale="0.05 0.05 0.05">
-        </a-entity>
+          scale="0.03 0.03 0.03"
+        ></a-entity>
 
-        <!-- Optional AR label card sitting in AR space -->
+        <!-- white info card floating in AR near the food -->
         <a-plane
           position="0 -0.2 0.05"
           rotation="-90 0 0"
           width="0.6"
           height="0.25"
           color="#ffffff"
-          material="shader: standard; transparent: false;">
-        </a-plane>
+          material="shader: standard; transparent: false;"
+        ></a-plane>
 
+        <!-- text on that card -->
         <a-entity
           rotation="-90 0 0"
           position="0 -0.2 0.06"
-          text="value: Chocolate Pastry Block\n$9.50\nAllergens: Nuts, Dairy;
-                align: center;
-                color: #111;
-                width: 1.5;">
-        </a-entity>
+          text="value: Chocolate Pastry Block - $9.50 - Allergens: Nuts, Dairy; align: center; color: #111; width: 1.5"
+        ></a-entity>
+
       </a-marker>
 
       <a-entity camera></a-entity>
