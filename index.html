@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Table AR Dish Preview</title>
 
-    <!-- A-Frame and AR.js -->
+    <!-- A-Frame + AR.js -->
     <script src="https://aframe.io/releases/1.5.0/aframe.min.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/aframe/build/aframe-ar.min.js"></script>
 
@@ -17,7 +17,7 @@
         background: #000;
       }
 
-      /* top info bar overlay (not AR, always visible on screen) */
+      /* top info bar overlay */
       .ui-top {
         position: fixed;
         left: 0;
@@ -31,19 +31,17 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        z-index: 9999; /* keeps overlay above AR canvas */
+        z-index: 9999;
       }
 
       .item-info {
         font-size: 13px;
         line-height: 1.3;
       }
-
       .item-name {
         font-weight: 600;
         font-size: 14px;
       }
-
       .price {
         font-weight: 600;
         font-size: 14px;
@@ -51,13 +49,13 @@
         white-space: nowrap;
       }
 
-      /* visually zoom-out the AR scene so camera doesn't feel super zoomed in */
+      /* visually zoom-out AR camera so it doesn't feel too close */
       a-scene {
-        transform: scale(0.8);           /* tweak 0.8 -> 0.7 if still feels too close */
+        transform: scale(0.8);   /* change to 0.7 if still feels zoomed */
         transform-origin: center center;
       }
 
-      /* small helper text at the bottom for debugging / user feedback */
+      /* bottom help text */
       .status {
         position: fixed;
         left: 0;
@@ -75,7 +73,7 @@
   </head>
 
   <body>
-    <!-- top overlay UI -->
+    <!-- overlay UI -->
     <div class="ui-top">
       <div class="item-info">
         <div class="item-name">Chocolate Pastry Block</div>
@@ -85,10 +83,9 @@
       <div class="price">$9.50</div>
     </div>
 
-    <!-- bottom status hint -->
     <div class="status">
-      Point your camera at the HIRO marker card on the table.<br/>
-      (If you only see camera zoomed in, move back a little.)
+      1) Scan QR to open this page<br/>
+      2) Point at the cafe logo mat to see the dish
     </div>
 
     <!-- AR scene -->
@@ -108,30 +105,59 @@
       "
     >
 
-      <!-- lights to make the model look nicer -->
+      <!-- lights -->
       <a-entity light="type: hemisphere; intensity: 0.9"></a-entity>
       <a-entity light="type: directional; intensity: 0.6" position="0 1 0"></a-entity>
 
-      <!-- marker anchor
-           'type="hiro"' uses the default HIRO marker.
-           print the HIRO marker and put it on the table in your "placemat" card.
+      <!-- CUSTOM MARKER -->
+      <!-- IMPORTANT:
+           - marker.patt MUST be in the same folder as this HTML.
+           - the table mat you print must use the SAME logo/image you used to make marker.patt.
       -->
-      <a-marker type="hiro">
+      <a-marker
+        type="pattern"
+        url="marker.patt"
+      >
 
-        <!-- 3D food model hovering just above the marker.
-             we are now using OBJ + MTL instead of glTF.
-             brownie.obj / brownie.mtl must sit in the SAME folder as this HTML.
-        -->
+        <!-- fake shadow under plate -->
+        <a-circle
+          position="0 -0.001 0"
+          rotation="-90 0 0"
+          radius="0.15"
+          material="color: #000000; opacity: 0.15; transparent: true;"
+        ></a-circle>
+
+        <!-- plate base -->
+        <a-cylinder
+          position="0 0 0"
+          rotation="-90 0 0"
+          radius="0.12"
+          height="0.015"
+          color="#ffffff"
+          material="color: #ffffff; metalness: 0.05; roughness: 0.4;"
+        ></a-cylinder>
+
+        <!-- plate rim -->
+        <a-cylinder
+          position="0 0.005 0"
+          rotation="-90 0 0"
+          radius="0.13"
+          height="0.003"
+          color="#f5f5f5"
+          material="color: #f5f5f5; metalness: 0.1; roughness: 0.6;"
+        ></a-cylinder>
+
+        <!-- brownie model on plate -->
         <a-entity
           obj-model="obj: url(brownie.obj); mtl: url(brownie.mtl)"
-          position="0 0 0.05"
+          position="0 0.03 0"
           rotation="0 0 0"
           scale="0.03 0.03 0.03"
         ></a-entity>
 
-        <!-- white info card floating in AR near the food -->
+        <!-- floating info card next to plate -->
         <a-plane
-          position="0 -0.2 0.05"
+          position="0 -0.25 0.05"
           rotation="-90 0 0"
           width="0.6"
           height="0.25"
@@ -139,10 +165,9 @@
           material="shader: standard; transparent: false;"
         ></a-plane>
 
-        <!-- text on that floating card -->
         <a-entity
           rotation="-90 0 0"
-          position="0 -0.2 0.06"
+          position="0 -0.25 0.06"
           text="value: Chocolate Pastry Block - $9.50 - Allergens: Nuts, Dairy; align: center; color: #111; width: 1.5"
         ></a-entity>
 
