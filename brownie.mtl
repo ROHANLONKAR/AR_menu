@@ -1,0 +1,7 @@
+newmtl brownie
+Kd 0.45 0.26 0.12
+Ka 0.10 0.10 0.10
+Ks 0.20 0.20 0.20
+Ns 20
+d 1.0
+illum 2
